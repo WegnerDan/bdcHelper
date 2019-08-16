@@ -1,7 +1,9 @@
 CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
   PUBLIC SECTION.
     TYPES:
-      mty_t_bdcdata TYPE STANDARD TABLE OF bdcdata WITH DEFAULT KEY.
+      mty_t_bdcdata    TYPE STANDARD TABLE OF bdcdata WITH DEFAULT KEY,
+      mty_t_bdcmsgcoll TYPE STANDARD TABLE OF bdcmsgcoll WITH DEFAULT KEY,
+      mty_t_bapiret2   TYPE STANDARD TABLE OF bapiret2 WITH DEFAULT KEY.
     CONSTANTS:
       BEGIN OF mc_dismode,
         disp_all TYPE ctu_params-dismode VALUE 'A', " display everything
@@ -40,6 +42,9 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
         button_f11         TYPE sy-ucomm VALUE '/11',
         button_f12         TYPE sy-ucomm VALUE '/12',
       END OF mc_okcode.
+    CLASS-METHODS:
+      conv_bdc_messages_to_bapiret2 IMPORTING it_bdc_msg         TYPE mty_t_bdcmsgcoll
+                                    RETURNING VALUE(rt_bapi_msg) TYPE mty_t_bapiret2.
     METHODS:
       constructor IMPORTING it_bdcdata TYPE mty_t_bdcdata OPTIONAL,
       load_queue IMPORTING iv_qid   TYPE apqi-qid
@@ -58,19 +63,20 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
                       RAISING   zcx_bdc,
       set_catt_mode IMPORTING iv TYPE ctu_params-cattmode
                     RAISING   zcx_bdc,
-      set_defsize IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      set_racommit IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      set_nobinpt IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      set_nobiend IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      execute IMPORTING iv_tcode      TYPE sy-tcode
-              RETURNING VALUE(rt_msg) TYPE tab_bdcmsgcoll
+      set_default_screen_size IMPORTING iv TYPE abap_bool DEFAULT abap_true,
+      set_run_after_commit IMPORTING iv TYPE abap_bool DEFAULT abap_true,
+      set_sy_binpt_to_space IMPORTING iv TYPE abap_bool DEFAULT abap_true,
+      set_sy_binpt_to_space_end IMPORTING iv TYPE abap_bool DEFAULT abap_true,
+      execute IMPORTING iv_tcode TYPE sy-tcode
               RAISING   zcx_bdc,
+      get_messages RETURNING VALUE(rt) TYPE mty_t_bdcmsgcoll,
       get_bdcdata RETURNING VALUE(rt_bdcdata) TYPE mty_t_bdcdata,
       set_bdcdata IMPORTING it_bdcdata TYPE mty_t_bdcdata.
   PROTECTED SECTION.
     DATA:
-      ms_options TYPE ctu_params,
-      mt_bdcdata TYPE mty_t_bdcdata.
+      ms_options  TYPE ctu_params,
+      mt_bdcdata  TYPE mty_t_bdcdata,
+      mt_messages TYPE mty_t_bdcmsgcoll.
   PRIVATE SECTION.
 ENDCLASS.
 
@@ -118,10 +124,11 @@ CLASS zcl_bdc IMPLEMENTATION.
         OTHERS = 2.
     CASE sy-subrc.
       WHEN 0.
+        FREE mt_messages.
         CALL TRANSACTION   iv_tcode
              USING         mt_bdcdata
              OPTIONS FROM  ms_options
-             MESSAGES INTO rt_msg.
+             MESSAGES INTO mt_messages.
         IF  sy-subrc > 0
         AND sy-subrc < 1001.
           RAISE EXCEPTION TYPE zcx_bdc
@@ -260,7 +267,7 @@ CLASS zcl_bdc IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD set_defsize.
+  METHOD set_default_screen_size.
 * ---------------------------------------------------------------------
     ms_options-defsize = iv.
 
@@ -268,7 +275,7 @@ CLASS zcl_bdc IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD set_nobiend.
+  METHOD set_sy_binpt_to_space_end.
 * ---------------------------------------------------------------------
     ms_options-nobiend = iv.
 
@@ -276,7 +283,7 @@ CLASS zcl_bdc IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD set_nobinpt.
+  METHOD set_sy_binpt_to_space.
 * ---------------------------------------------------------------------
     ms_options-nobinpt = iv.
 
@@ -284,12 +291,33 @@ CLASS zcl_bdc IMPLEMENTATION.
   ENDMETHOD.
 
 
-  METHOD set_racommit.
+  METHOD set_run_after_commit.
 * ---------------------------------------------------------------------
     ms_options-racommit = iv.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
 
+
+  METHOD get_messages.
+* ---------------------------------------------------------------------
+    rt = mt_messages.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD conv_bdc_messages_to_bapiret2.
+* ---------------------------------------------------------------------
+    rt_bapi_msg = CORRESPONDING #( it_bdc_msg MAPPING type       = msgtyp
+                                                      id         = msgid
+                                                      number     = msgnr
+                                                      message_v1 = msgv1
+                                                      message_v2 = msgv2
+                                                      message_v3 = msgv3
+                                                      message_v4 = msgv4 ).
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
 
 ENDCLASS.
