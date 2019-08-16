@@ -13,9 +13,33 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
         local TYPE ctu_params-updmode VALUE 'L',
         sync  TYPE ctu_params-updmode VALUE 'S',
         async TYPE ctu_params-updmode VALUE 'A',
-      END OF mc_updmode.
-    DATA:
-      ms_options TYPE ctu_params.
+      END OF mc_updmode,
+      BEGIN OF mc_cattmode,
+        none                 TYPE ctu_params-cattmode VALUE ' ', " No CATT
+        no_ind_scr_control   TYPE ctu_params-cattmode VALUE 'N', " CATT without individual screen control
+        with_ind_scr_control TYPE ctu_params-cattmode VALUE 'A', " CATT with individual screen control
+      END OF mc_cattmode,
+      BEGIN OF mc_okcode,
+        " see: https://wiki.scn.sap.com/wiki/display/ABAP/Batch+Input+FAQ#BatchInputFAQ-WhatarethecommandsavailableforcontrollingtheflowofaBIsession?
+        delete_transaction TYPE sy-ucomm VALUE '/BDEL', " delete the current transaction from the session
+        skip_transaction   TYPE sy-ucomm VALUE '/N',    " skip to the next transaction without completing the current transaction
+        cancel_transaction TYPE sy-ucomm VALUE '/BEND', " cancel the processing of the batch input session without completing any additional transactions, including the current transaction.
+        switch_to_err_only TYPE sy-ucomm VALUE '/BDE',  " while in foreground mode, use this code to switch to errors only mode
+        switch_to_disp_all TYPE sy-ucomm VALUE '/BDA',  " while in errors only mode, use this code to switch to foreground mode
+        button_enter       TYPE sy-ucomm VALUE '/00',
+        button_f1          TYPE sy-ucomm VALUE '/01',
+        button_f2          TYPE sy-ucomm VALUE '/02',
+        button_f3          TYPE sy-ucomm VALUE '/03',
+        button_f4          TYPE sy-ucomm VALUE '/04',
+        button_f5          TYPE sy-ucomm VALUE '/05',
+        button_f6          TYPE sy-ucomm VALUE '/06',
+        button_f7          TYPE sy-ucomm VALUE '/07',
+        button_f8          TYPE sy-ucomm VALUE '/08',
+        button_f9          TYPE sy-ucomm VALUE '/09',
+        button_f10         TYPE sy-ucomm VALUE '/10',
+        button_f11         TYPE sy-ucomm VALUE '/11',
+        button_f12         TYPE sy-ucomm VALUE '/12',
+      END OF mc_okcode.
     METHODS:
       constructor IMPORTING it_bdcdata TYPE mty_t_bdcdata OPTIONAL,
       load_queue IMPORTING iv_qid   TYPE apqi-qid
@@ -28,15 +52,26 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
                           iv_use_write TYPE abap_bool DEFAULT abap_true,
       add_okcode IMPORTING iv_okcode TYPE sy-ucomm,
       add_cursor IMPORTING iv_cursor TYPE fnam_____4,
+      set_display_mode IMPORTING iv TYPE ctu_params-dismode DEFAULT mc_dismode-err_only
+                       RAISING   zcx_bdc,
+      set_update_mode IMPORTING iv TYPE ctu_params-updmode
+                      RAISING   zcx_bdc,
+      set_catt_mode IMPORTING iv TYPE ctu_params-cattmode
+                    RAISING   zcx_bdc,
+      set_defsize IMPORTING iv TYPE abap_bool DEFAULT abap_true,
+      set_racommit IMPORTING iv TYPE abap_bool DEFAULT abap_true,
+      set_nobinpt IMPORTING iv TYPE abap_bool DEFAULT abap_true,
+      set_nobiend IMPORTING iv TYPE abap_bool DEFAULT abap_true,
       execute IMPORTING iv_tcode      TYPE sy-tcode
               RETURNING VALUE(rt_msg) TYPE tab_bdcmsgcoll
               RAISING   zcx_bdc,
-      get_bdcdata RETURNING VALUE(rt_bdcdata) TYPE mty_t_bdcdata.
-
+      get_bdcdata RETURNING VALUE(rt_bdcdata) TYPE mty_t_bdcdata,
+      set_bdcdata IMPORTING it_bdcdata TYPE mty_t_bdcdata.
   PROTECTED SECTION.
-  PRIVATE SECTION.
     DATA:
+      ms_options TYPE ctu_params,
       mt_bdcdata TYPE mty_t_bdcdata.
+  PRIVATE SECTION.
 ENDCLASS.
 
 
@@ -167,5 +202,94 @@ CLASS zcl_bdc IMPLEMENTATION.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
+
+
+  METHOD set_bdcdata.
+* ---------------------------------------------------------------------
+    mt_bdcdata = it_bdcdata.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD set_display_mode.
+* ---------------------------------------------------------------------
+    IF iv NA mc_dismode.
+      RAISE EXCEPTION TYPE zcx_bdc
+        EXPORTING
+          textid  = zcx_bdc=>invalid_dismode
+          dismode = iv.
+    ENDIF.
+
+* ---------------------------------------------------------------------
+    ms_options-dismode = iv.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD set_update_mode.
+* ---------------------------------------------------------------------
+    IF iv NA mc_updmode.
+      RAISE EXCEPTION TYPE zcx_bdc
+        EXPORTING
+          textid  = zcx_bdc=>invalid_updmode
+          updmode = iv.
+    ENDIF.
+
+* ---------------------------------------------------------------------
+    ms_options-updmode = iv.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD set_catt_mode.
+* ---------------------------------------------------------------------
+    IF iv NA mc_cattmode.
+      RAISE EXCEPTION TYPE zcx_bdc
+        EXPORTING
+          textid   = zcx_bdc=>invalid_cattmode
+          cattmode = iv.
+    ENDIF.
+
+* ---------------------------------------------------------------------
+    ms_options-cattmode = iv.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD set_defsize.
+* ---------------------------------------------------------------------
+    ms_options-defsize = iv.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD set_nobiend.
+* ---------------------------------------------------------------------
+    ms_options-nobiend = iv.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD set_nobinpt.
+* ---------------------------------------------------------------------
+    ms_options-nobinpt = iv.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD set_racommit.
+* ---------------------------------------------------------------------
+    ms_options-racommit = iv.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
 
 ENDCLASS.

@@ -35,19 +35,49 @@ CLASS zcx_bdc DEFINITION PUBLIC INHERITING FROM cx_static_check FINAL CREATE PUB
         attr2 TYPE scx_attrname VALUE 'TRANS_COUNT',
         attr3 TYPE scx_attrname VALUE '',
         attr4 TYPE scx_attrname VALUE '',
-      END OF queue_read_error.
+      END OF queue_read_error,
+      BEGIN OF invalid_dismode,
+        msgid TYPE symsgid VALUE 'Z_BDC',
+        msgno TYPE symsgno VALUE '004',
+        attr1 TYPE scx_attrname VALUE 'DISMODE',
+        attr2 TYPE scx_attrname VALUE '',
+        attr3 TYPE scx_attrname VALUE '',
+        attr4 TYPE scx_attrname VALUE '',
+      END OF invalid_dismode,
+      BEGIN OF invalid_updmode,
+        msgid TYPE symsgid VALUE 'Z_BDC',
+        msgno TYPE symsgno VALUE '005',
+        attr1 TYPE scx_attrname VALUE 'UPDMODE',
+        attr2 TYPE scx_attrname VALUE '',
+        attr3 TYPE scx_attrname VALUE '',
+        attr4 TYPE scx_attrname VALUE '',
+      END OF invalid_updmode,
+      BEGIN OF invalid_cattmode,
+        msgid TYPE symsgid VALUE 'Z_BDC',
+        msgno TYPE symsgno VALUE '006',
+        attr1 TYPE scx_attrname VALUE 'CATTMODE',
+        attr2 TYPE scx_attrname VALUE '',
+        attr3 TYPE scx_attrname VALUE '',
+        attr4 TYPE scx_attrname VALUE '',
+      END OF invalid_cattmode.
     DATA:
       syst        TYPE sy,
       transaction TYPE sy-tcode,
       queue_id    TYPE apqi-qid,
-      trans_count TYPE apq_tran.
+      trans_count TYPE apq_tran,
+      dismode     TYPE ctu_params-dismode,
+      updmode     TYPE ctu_params-updmode,
+      cattmode    TYPE ctu_params-cattmode.
     METHODS:
       constructor IMPORTING textid      LIKE if_t100_message=>t100key OPTIONAL
                             previous    LIKE previous OPTIONAL
                             syst        LIKE syst OPTIONAL
                             transaction LIKE transaction OPTIONAL
                             queue_id    LIKE queue_id OPTIONAL
-                            trans_count LIKE trans_count OPTIONAL.
+                            trans_count LIKE trans_count OPTIONAL
+                            dismode     LIKE dismode OPTIONAL
+                            updmode     LIKE updmode OPTIONAL
+                            cattmode    LIKE cattmode OPTIONAL.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -68,6 +98,9 @@ CLASS zcx_bdc IMPLEMENTATION.
     me->transaction = transaction.
     me->queue_id = queue_id.
     me->trans_count = trans_count.
+    me->dismode = dismode.
+    me->updmode = updmode.
+    me->cattmode = cattmode.
 
 * ---------------------------------------------------------------------
     IF textid IS INITIAL.
