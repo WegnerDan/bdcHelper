@@ -27,15 +27,27 @@ CLASS zcx_bdc DEFINITION PUBLIC INHERITING FROM cx_static_check FINAL CREATE PUB
         attr2 TYPE scx_attrname VALUE '',
         attr3 TYPE scx_attrname VALUE '',
         attr4 TYPE scx_attrname VALUE '',
-      END OF bdc_error.
+      END OF bdc_error,
+      BEGIN OF queue_read_error,
+        msgid TYPE symsgid VALUE 'Z_BDC',
+        msgno TYPE symsgno VALUE '003',
+        attr1 TYPE scx_attrname VALUE 'QUEUE_ID',
+        attr2 TYPE scx_attrname VALUE 'TRANS_COUNT',
+        attr3 TYPE scx_attrname VALUE '',
+        attr4 TYPE scx_attrname VALUE '',
+      END OF queue_read_error.
     DATA:
       syst        TYPE sy,
-      transaction TYPE sy-tcode.
+      transaction TYPE sy-tcode,
+      queue_id    TYPE apqi-qid,
+      trans_count TYPE apq_tran.
     METHODS:
       constructor IMPORTING textid      LIKE if_t100_message=>t100key OPTIONAL
                             previous    LIKE previous OPTIONAL
                             syst        LIKE syst OPTIONAL
-                            transaction LIKE transaction OPTIONAL.
+                            transaction LIKE transaction OPTIONAL
+                            queue_id    LIKE queue_id OPTIONAL
+                            trans_count LIKE trans_count OPTIONAL.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -54,6 +66,8 @@ CLASS zcx_bdc IMPLEMENTATION.
 * ---------------------------------------------------------------------
     me->syst = syst.
     me->transaction = transaction.
+    me->queue_id = queue_id.
+    me->trans_count = trans_count.
 
 * ---------------------------------------------------------------------
     IF textid IS INITIAL.

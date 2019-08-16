@@ -26,6 +26,8 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       add_field IMPORTING iv_name      TYPE bdcdata-fnam
                           iv_value     TYPE any
                           iv_use_write TYPE abap_bool DEFAULT abap_true,
+      add_okcode IMPORTING iv_okcode TYPE sy-ucomm,
+      add_cursor IMPORTING iv_cursor TYPE fnam_____4,
       execute IMPORTING iv_tcode      TYPE sy-tcode
               RETURNING VALUE(rt_msg) TYPE tab_bdcmsgcoll
               RAISING   zcx_bdc,
@@ -120,14 +122,21 @@ CLASS zcl_bdc IMPLEMENTATION.
 * ---------------------------------------------------------------------
     CALL FUNCTION 'BDC_OBJECT_READ'
       EXPORTING
-        queue_id  = iv_qid
-        trans     = iv_trans
+        queue_id         = iv_qid
+        trans            = iv_trans
       TABLES
-        dynprotab = mt_bdcdata
+        dynprotab        = mt_bdcdata
       EXCEPTIONS
-        OTHERS    = 1.
+        not_found        = 1
+        system_failure   = 2
+        invalid_datatype = 3
+        OTHERS           = 4.
     IF sy-subrc <> 0.
-      RAISE EXCEPTION TYPE zcx_bdc.
+      RAISE EXCEPTION TYPE zcx_bdc
+        EXPORTING
+          textid      = zcx_bdc=>queue_read_error
+          queue_id    = iv_qid
+          trans_count = iv_trans.
     ENDIF.
 
 * ---------------------------------------------------------------------
@@ -137,6 +146,24 @@ CLASS zcl_bdc IMPLEMENTATION.
   METHOD get_bdcdata.
 * ---------------------------------------------------------------------
     rt_bdcdata = mt_bdcdata.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD add_okcode.
+* ---------------------------------------------------------------------
+    APPEND VALUE #( fnam = 'BDC_OKCODE'
+                    fval = iv_okcode    ) TO mt_bdcdata.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
+
+
+  METHOD add_cursor.
+* ---------------------------------------------------------------------
+    APPEND VALUE #( fnam = 'BDC_CURSOR'
+                    fval = iv_cursor    ) TO mt_bdcdata.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.

@@ -26,6 +26,12 @@
      <MSGNR>002</MSGNR>
      <TEXT>BDC-Verarbeitungsfehler</TEXT>
     </T100>
+    <T100>
+     <SPRSL>D</SPRSL>
+     <ARBGB>Z_BDC</ARBGB>
+     <MSGNR>003</MSGNR>
+     <TEXT>Batch-Input-Mappe mit QID &amp;1 und Transaktionsnummer &amp;2 nicht gefunden</TEXT>
+    </T100>
    </T100>
   </asx:values>
  </asx:abap>
