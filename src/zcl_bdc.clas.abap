@@ -55,9 +55,9 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       add_field IMPORTING iv_name      TYPE bdcdata-fnam
                           iv_value     TYPE any
                           iv_use_write TYPE abap_bool DEFAULT abap_true,
-      add_okcode IMPORTING iv_okcode TYPE sy-ucomm,
+      add_okcode IMPORTING iv_okcode TYPE sy-ucomm DEFAULT zcl_bdc=>mc_okcode-button_enter,
       add_cursor IMPORTING iv_cursor TYPE fnam_____4,
-      set_display_mode IMPORTING iv TYPE ctu_params-dismode DEFAULT mc_dismode-err_only
+      set_display_mode IMPORTING iv TYPE ctu_params-dismode DEFAULT zcl_bdc=>mc_dismode-err_only
                        RAISING   zcx_bdc,
       set_update_mode IMPORTING iv TYPE ctu_params-updmode
                       RAISING   zcx_bdc,
