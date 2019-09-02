@@ -54,7 +54,8 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
                            iv_dynpro  TYPE bdcdata-dynpro,
       add_field IMPORTING iv_name      TYPE bdcdata-fnam
                           iv_value     TYPE any
-                          iv_use_write TYPE abap_bool DEFAULT abap_true,
+                          iv_use_write TYPE abap_bool DEFAULT abap_true
+                          iv_condense  TYPE abap_bool DEFAULT abap_false,
       add_okcode IMPORTING iv_okcode TYPE sy-ucomm DEFAULT zcl_bdc=>mc_okcode-button_enter,
       add_cursor IMPORTING iv_cursor TYPE fnam_____4,
       set_display_mode IMPORTING iv TYPE ctu_params-dismode DEFAULT zcl_bdc=>mc_dismode-err_only
@@ -68,7 +69,7 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       set_sy_binpt_to_space IMPORTING iv TYPE abap_bool DEFAULT abap_true,
       set_sy_binpt_to_space_end IMPORTING iv TYPE abap_bool DEFAULT abap_true,
       execute IMPORTING iv_tcode TYPE sy-tcode
-              RAISING   zcx_bdc,
+              RAISING   RESUMABLE(zcx_bdc),
       get_messages RETURNING VALUE(rt) TYPE mty_t_bdcmsgcoll,
       get_bdcdata RETURNING VALUE(rt_bdcdata) TYPE mty_t_bdcdata,
       set_bdcdata IMPORTING it_bdcdata TYPE mty_t_bdcdata.
@@ -108,6 +109,11 @@ CLASS zcl_bdc IMPLEMENTATION.
       WHEN abap_false.
         <ls_bdc>-fval = iv_value.
     ENDCASE.
+
+* ---------------------------------------------------------------------
+    IF iv_condense = abap_true.
+      CONDENSE <ls_bdc>-fval.
+    ENDIF.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
