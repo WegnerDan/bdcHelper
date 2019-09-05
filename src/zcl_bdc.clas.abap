@@ -137,18 +137,18 @@ CLASS zcl_bdc IMPLEMENTATION.
              MESSAGES INTO mt_messages.
         IF  sy-subrc > 0
         AND sy-subrc < 1001.
-          RAISE EXCEPTION TYPE zcx_bdc
+          RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
             EXPORTING
               textid      = zcx_bdc=>transaction_error
               syst        = sy
               transaction = iv_tcode.
         ELSEIF sy-subrc > 1000.
-          RAISE EXCEPTION TYPE zcx_bdc
+          RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
             EXPORTING
               textid = zcx_bdc=>bdc_error.
         ENDIF.
       WHEN OTHERS.
-        RAISE EXCEPTION TYPE zcx_bdc
+        RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
           EXPORTING
             textid = zcx_bdc=>syst_message
             syst   = sy.
