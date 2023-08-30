@@ -1,27 +1,28 @@
 CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
   PUBLIC SECTION.
     TYPES:
-      mty_t_bdcdata    TYPE STANDARD TABLE OF bdcdata WITH DEFAULT KEY,
-      mty_t_bdcmsgcoll TYPE STANDARD TABLE OF bdcmsgcoll WITH DEFAULT KEY,
-      mty_t_bapiret2   TYPE STANDARD TABLE OF bapiret2 WITH DEFAULT KEY.
+      ty_bdc_lines     TYPE STANDARD TABLE OF bdcdata WITH DEFAULT KEY,
+      ty_bdc_messages  TYPE STANDARD TABLE OF bdcmsgcoll WITH DEFAULT KEY,
+      ty_bapi_messages TYPE STANDARD TABLE OF bapiret2 WITH DEFAULT KEY.
     CONSTANTS:
-      BEGIN OF mc_dismode,
+
+      BEGIN OF c_dismode,
         disp_all TYPE ctu_params-dismode VALUE 'A', " display everything
         err_only TYPE ctu_params-dismode VALUE 'E', " only display errors
         dark     TYPE ctu_params-dismode VALUE 'N', " display nothing
         dbg_dark TYPE ctu_params-dismode VALUE 'P', " display nothing but enable debugging
-      END OF mc_dismode,
-      BEGIN OF mc_updmode,
+      END OF c_dismode,
+      BEGIN OF c_updmode,
         local TYPE ctu_params-updmode VALUE 'L',
         sync  TYPE ctu_params-updmode VALUE 'S',
         async TYPE ctu_params-updmode VALUE 'A',
-      END OF mc_updmode,
-      BEGIN OF mc_cattmode,
+      END OF c_updmode,
+      BEGIN OF c_cattmode,
         none                 TYPE ctu_params-cattmode VALUE ' ', " No CATT
         no_ind_scr_control   TYPE ctu_params-cattmode VALUE 'N', " CATT without individual screen control
         with_ind_scr_control TYPE ctu_params-cattmode VALUE 'A', " CATT with individual screen control
-      END OF mc_cattmode,
-      BEGIN OF mc_okcode,
+      END OF c_cattmode,
+      BEGIN OF c_okcode,
         " see: https://wiki.scn.sap.com/wiki/display/ABAP/Batch+Input+FAQ#BatchInputFAQ-WhatarethecommandsavailableforcontrollingtheflowofaBIsession?
         delete_transaction TYPE sy-ucomm VALUE '/BDEL', " delete the current transaction from the session
         skip_transaction   TYPE sy-ucomm VALUE '/N',    " skip to the next transaction without completing the current transaction
@@ -41,43 +42,43 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
         button_f10         TYPE sy-ucomm VALUE '/10',
         button_f11         TYPE sy-ucomm VALUE '/11',
         button_f12         TYPE sy-ucomm VALUE '/12',
-      END OF mc_okcode.
+      END OF c_okcode.
     CLASS-METHODS:
-      conv_bdc_messages_to_bapiret2 IMPORTING it_bdc_msg         TYPE mty_t_bdcmsgcoll
-                                    RETURNING VALUE(rt_bapi_msg) TYPE mty_t_bapiret2.
+      conv_bdc_messages_to_bapiret2 IMPORTING bdc_messages  TYPE ty_bdc_messages
+                                    RETURNING VALUE(result) TYPE ty_bapi_messages.
     METHODS:
-      constructor IMPORTING it_bdcdata TYPE mty_t_bdcdata OPTIONAL,
-      load_queue IMPORTING iv_qid   TYPE apqi-qid
-                           iv_trans TYPE apq_tran
+      constructor IMPORTING bdc_lines TYPE ty_bdc_lines OPTIONAL,
+      load_queue IMPORTING queue_id            TYPE apqi-qid
+                           transaction_counter TYPE apq_tran
                  RAISING   zcx_bdc,
-      add_dynpro IMPORTING iv_program TYPE bdcdata-program
-                           iv_dynpro  TYPE bdcdata-dynpro,
-      add_field IMPORTING iv_name      TYPE bdcdata-fnam
-                          iv_value     TYPE any
-                          iv_use_write TYPE abap_bool DEFAULT abap_true
-                          iv_condense  TYPE abap_bool DEFAULT abap_false,
-      add_okcode IMPORTING iv_okcode TYPE sy-ucomm DEFAULT zcl_bdc=>mc_okcode-button_enter,
-      add_cursor IMPORTING iv_cursor TYPE fnam_____4,
-      set_display_mode IMPORTING iv TYPE ctu_params-dismode DEFAULT zcl_bdc=>mc_dismode-err_only
+      add_dynpro IMPORTING program TYPE bdcdata-program
+                           dynpro  TYPE bdcdata-dynpro,
+      add_field IMPORTING name      TYPE bdcdata-fnam
+                          value     TYPE any
+                          use_write TYPE abap_bool DEFAULT abap_true
+                          condense  TYPE abap_bool DEFAULT abap_false,
+      add_okcode IMPORTING okcode TYPE sy-ucomm DEFAULT zcl_bdc=>c_okcode-button_enter,
+      add_cursor IMPORTING cursor TYPE fnam_____4,
+      set_display_mode IMPORTING dismode TYPE ctu_params-dismode DEFAULT zcl_bdc=>c_dismode-err_only
                        RAISING   zcx_bdc,
-      set_update_mode IMPORTING iv TYPE ctu_params-updmode
+      set_update_mode IMPORTING updmode TYPE ctu_params-updmode
                       RAISING   zcx_bdc,
-      set_catt_mode IMPORTING iv TYPE ctu_params-cattmode
+      set_catt_mode IMPORTING cattmode TYPE ctu_params-cattmode
                     RAISING   zcx_bdc,
-      set_default_screen_size IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      set_run_after_commit IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      set_sy_binpt_to_space IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      set_sy_binpt_to_space_end IMPORTING iv TYPE abap_bool DEFAULT abap_true,
-      execute IMPORTING iv_tcode TYPE sy-tcode
+      set_default_screen_size IMPORTING defsize TYPE abap_bool DEFAULT abap_true,
+      set_run_after_commit IMPORTING racommit TYPE abap_bool DEFAULT abap_true,
+      set_sy_binpt_to_space IMPORTING nobinpt TYPE abap_bool DEFAULT abap_true,
+      set_sy_binpt_to_space_end IMPORTING nobiend TYPE abap_bool DEFAULT abap_true,
+      execute IMPORTING tcode TYPE sy-tcode
               RAISING   RESUMABLE(zcx_bdc),
-      get_messages RETURNING VALUE(rt) TYPE mty_t_bdcmsgcoll,
-      get_bdcdata RETURNING VALUE(rt_bdcdata) TYPE mty_t_bdcdata,
-      set_bdcdata IMPORTING it_bdcdata TYPE mty_t_bdcdata.
+      get_messages RETURNING VALUE(result) TYPE ty_bdc_messages,
+      get_bdcdata RETURNING VALUE(result) TYPE ty_bdc_lines,
+      set_bdcdata IMPORTING bdc_lines TYPE ty_bdc_lines.
   PROTECTED SECTION.
     DATA:
-      ms_options  TYPE ctu_params,
-      mt_bdcdata  TYPE mty_t_bdcdata,
-      mt_messages TYPE mty_t_bdcmsgcoll.
+      bdc_option   TYPE ctu_params,
+      bdc_lines    TYPE ty_bdc_lines,
+      bdc_messages TYPE ty_bdc_messages.
   PRIVATE SECTION.
 ENDCLASS.
 
@@ -87,9 +88,9 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD add_dynpro.
 * ---------------------------------------------------------------------
-    APPEND VALUE #( program  = iv_program
-                    dynpro   = iv_dynpro
-                    dynbegin = abap_true  ) TO mt_bdcdata.
+    APPEND VALUE #( program  = program
+                    dynpro   = dynpro
+                    dynbegin = abap_true ) TO bdc_lines.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -97,22 +98,22 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD add_field.
 * ---------------------------------------------------------------------
-    APPEND INITIAL LINE TO mt_bdcdata ASSIGNING FIELD-SYMBOL(<ls_bdc>).
+    APPEND INITIAL LINE TO bdc_lines ASSIGNING FIELD-SYMBOL(<bdc>).
 
 * ---------------------------------------------------------------------
-    <ls_bdc>-fnam = iv_name.
+    <bdc>-fnam = name.
 
 * ---------------------------------------------------------------------
-    CASE iv_use_write.
+    CASE use_write.
       WHEN abap_true.
-        WRITE iv_value TO <ls_bdc>-fval LEFT-JUSTIFIED.
+        WRITE value TO <bdc>-fval LEFT-JUSTIFIED.
       WHEN abap_false.
-        <ls_bdc>-fval = iv_value.
+        <bdc>-fval = value.
     ENDCASE.
 
 * ---------------------------------------------------------------------
-    IF iv_condense = abap_true.
-      CONDENSE <ls_bdc>-fval.
+    IF condense = abap_true.
+      CONDENSE <bdc>-fval.
     ENDIF.
 
 * ---------------------------------------------------------------------
@@ -123,25 +124,25 @@ CLASS zcl_bdc IMPLEMENTATION.
 * ---------------------------------------------------------------------
     CALL FUNCTION 'AUTHORITY_CHECK_TCODE'
       EXPORTING
-        tcode  = iv_tcode
+        tcode  = tcode
       EXCEPTIONS
         ok     = 0
         not_ok = 1
         OTHERS = 2.
     CASE sy-subrc.
       WHEN 0.
-        FREE mt_messages.
-        CALL TRANSACTION   iv_tcode
-             USING         mt_bdcdata
-             OPTIONS FROM  ms_options
-             MESSAGES INTO mt_messages.
+        FREE bdc_messages.
+        CALL TRANSACTION   tcode
+             USING         bdc_lines
+             OPTIONS FROM  bdc_option
+             MESSAGES INTO bdc_messages.
         IF  sy-subrc > 0
         AND sy-subrc < 1001.
           RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
             EXPORTING
               textid      = zcx_bdc=>transaction_error
               syst        = sy
-              transaction = iv_tcode.
+              transaction = tcode.
         ELSEIF sy-subrc > 1000.
           RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
             EXPORTING
@@ -160,7 +161,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD constructor.
 * ---------------------------------------------------------------------
-    mt_bdcdata = it_bdcdata.
+    me->bdc_lines = bdc_lines.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -170,10 +171,10 @@ CLASS zcl_bdc IMPLEMENTATION.
 * ---------------------------------------------------------------------
     CALL FUNCTION 'BDC_OBJECT_READ'
       EXPORTING
-        queue_id         = iv_qid
-        trans            = iv_trans
+        queue_id         = queue_id
+        trans            = transaction_counter
       TABLES
-        dynprotab        = mt_bdcdata
+        dynprotab        = bdc_lines
       EXCEPTIONS
         not_found        = 1
         system_failure   = 2
@@ -183,8 +184,8 @@ CLASS zcl_bdc IMPLEMENTATION.
       RAISE EXCEPTION TYPE zcx_bdc
         EXPORTING
           textid      = zcx_bdc=>queue_read_error
-          queue_id    = iv_qid
-          trans_count = iv_trans.
+          queue_id    = queue_id
+          trans_count = transaction_counter.
     ENDIF.
 
 * ---------------------------------------------------------------------
@@ -193,7 +194,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD get_bdcdata.
 * ---------------------------------------------------------------------
-    rt_bdcdata = mt_bdcdata.
+    result = bdc_lines.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -202,7 +203,7 @@ CLASS zcl_bdc IMPLEMENTATION.
   METHOD add_okcode.
 * ---------------------------------------------------------------------
     APPEND VALUE #( fnam = 'BDC_OKCODE'
-                    fval = iv_okcode    ) TO mt_bdcdata.
+                    fval = okcode    ) TO bdc_lines.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -211,7 +212,7 @@ CLASS zcl_bdc IMPLEMENTATION.
   METHOD add_cursor.
 * ---------------------------------------------------------------------
     APPEND VALUE #( fnam = 'BDC_CURSOR'
-                    fval = iv_cursor    ) TO mt_bdcdata.
+                    fval = cursor    ) TO bdc_lines.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -219,7 +220,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_bdcdata.
 * ---------------------------------------------------------------------
-    mt_bdcdata = it_bdcdata.
+    me->bdc_lines = bdc_lines.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -227,15 +228,15 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_display_mode.
 * ---------------------------------------------------------------------
-    IF iv NA mc_dismode.
+    IF dismode NA c_dismode.
       RAISE EXCEPTION TYPE zcx_bdc
         EXPORTING
           textid  = zcx_bdc=>invalid_dismode
-          dismode = iv.
+          dismode = dismode.
     ENDIF.
 
 * ---------------------------------------------------------------------
-    ms_options-dismode = iv.
+    bdc_option-dismode = dismode.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -243,15 +244,15 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_update_mode.
 * ---------------------------------------------------------------------
-    IF iv NA mc_updmode.
+    IF updmode NA c_updmode.
       RAISE EXCEPTION TYPE zcx_bdc
         EXPORTING
           textid  = zcx_bdc=>invalid_updmode
-          updmode = iv.
+          updmode = updmode.
     ENDIF.
 
 * ---------------------------------------------------------------------
-    ms_options-updmode = iv.
+    bdc_option-updmode = updmode.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -259,15 +260,15 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_catt_mode.
 * ---------------------------------------------------------------------
-    IF iv NA mc_cattmode.
+    IF cattmode NA c_cattmode.
       RAISE EXCEPTION TYPE zcx_bdc
         EXPORTING
           textid   = zcx_bdc=>invalid_cattmode
-          cattmode = iv.
+          cattmode = cattmode.
     ENDIF.
 
 * ---------------------------------------------------------------------
-    ms_options-cattmode = iv.
+    bdc_option-cattmode = cattmode.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -275,7 +276,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_default_screen_size.
 * ---------------------------------------------------------------------
-    ms_options-defsize = iv.
+    bdc_option-defsize = defsize.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -283,7 +284,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_sy_binpt_to_space_end.
 * ---------------------------------------------------------------------
-    ms_options-nobiend = iv.
+    bdc_option-nobiend = nobiend.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -291,7 +292,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_sy_binpt_to_space.
 * ---------------------------------------------------------------------
-    ms_options-nobinpt = iv.
+    bdc_option-nobinpt = nobinpt.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -299,7 +300,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD set_run_after_commit.
 * ---------------------------------------------------------------------
-    ms_options-racommit = iv.
+    bdc_option-racommit = racommit.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -307,7 +308,7 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD get_messages.
 * ---------------------------------------------------------------------
-    rt = mt_messages.
+    result = bdc_messages.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
@@ -315,13 +316,13 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD conv_bdc_messages_to_bapiret2.
 * ---------------------------------------------------------------------
-    rt_bapi_msg = CORRESPONDING #( it_bdc_msg MAPPING type       = msgtyp
-                                                      id         = msgid
-                                                      number     = msgnr
-                                                      message_v1 = msgv1
-                                                      message_v2 = msgv2
-                                                      message_v3 = msgv3
-                                                      message_v4 = msgv4 ).
+    result = CORRESPONDING #( bdc_messages MAPPING type       = msgtyp
+                                                   id         = msgid
+                                                   number     = msgnr
+                                                   message_v1 = msgv1
+                                                   message_v2 = msgv2
+                                                   message_v3 = msgv3
+                                                   message_v4 = msgv4 ).
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
