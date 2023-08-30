@@ -61,7 +61,7 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       add_cursor IMPORTING cursor TYPE fnam_____4,
       set_display_mode IMPORTING dismode TYPE ctu_params-dismode DEFAULT zcl_bdc=>c_dismode-err_only
                        RAISING   zcx_bdc,
-      set_update_mode IMPORTING updmode TYPE ctu_params-updmode
+      set_update_mode IMPORTING updmode TYPE ctu_params-updmode DEFAULT zcl_bdc=>c_updmode-async
                       RAISING   zcx_bdc,
       set_catt_mode IMPORTING cattmode TYPE ctu_params-cattmode
                     RAISING   zcx_bdc,
