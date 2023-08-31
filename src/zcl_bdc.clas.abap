@@ -71,6 +71,8 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       set_sy_binpt_to_space_end IMPORTING nobiend TYPE abap_bool DEFAULT abap_true,
       execute IMPORTING tcode TYPE sy-tcode
               RAISING   RESUMABLE(zcx_bdc),
+      execute_rfc IMPORTING tcode       TYPE sy-tcode
+                            destination TYPE rfcdest DEFAULT 'NONE',
       get_messages RETURNING VALUE(result) TYPE ty_bdc_messages,
       get_bdcdata RETURNING VALUE(result) TYPE ty_bdc_lines,
       set_bdcdata IMPORTING bdc_lines TYPE ty_bdc_lines.
@@ -158,6 +160,64 @@ CLASS zcl_bdc IMPLEMENTATION.
 * ---------------------------------------------------------------------
   ENDMETHOD.
 
+
+  METHOD execute_rfc.
+* ---------------------------------------------------------------------
+    DATA:
+      bdc_subrc                     TYPE sy-subrc,
+      message_system_failure        TYPE c LENGTH 999,
+      message_communication_failure TYPE c LENGTH 999.
+    CALL FUNCTION 'ABAP4_CALL_TRANSACTION'
+      DESTINATION destination
+      EXPORTING
+        tcode                   = tcode
+        skip_screen             = abap_false
+        mode_val                = bdc_option-dismode
+        update_val              = bdc_option-updmode
+      IMPORTING
+        subrc                   = bdc_subrc
+      TABLES
+        using_tab               = bdc_lines
+        mess_tab                = bdc_messages
+      EXCEPTIONS
+        call_transaction_denied = 1
+        tcode_invalid           = 2
+        system_failure          = 3 MESSAGE message_system_failure
+        communication_failure   = 4 MESSAGE message_communication_failure
+        OTHERS                  = 5.
+    CASE sy-subrc.
+      WHEN 0.
+        IF  bdc_subrc > 0
+        AND bdc_subrc < 1001.
+          RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
+            EXPORTING
+              textid      = zcx_bdc=>transaction_error
+              syst        = sy
+              transaction = tcode.
+        ELSEIF bdc_subrc > 1000.
+          RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
+            EXPORTING
+              textid = zcx_bdc=>bdc_error.
+        ENDIF.
+      WHEN 3.
+        RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
+          EXPORTING
+            textid           = zcx_bdc=>rfc_system_failure
+            rfc_sys_fail_msg = CONV #( message_system_failure ).
+      WHEN 4.
+        RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
+          EXPORTING
+            textid           = zcx_bdc=>rfc_communication_failure
+            rfc_sys_fail_msg = CONV #( message_communication_failure ).
+      WHEN OTHERS.
+        RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
+          EXPORTING
+            textid = zcx_bdc=>syst_message
+            syst   = sy.
+    ENDCASE.
+
+* ---------------------------------------------------------------------
+  ENDMETHOD.
 
   METHOD constructor.
 * ---------------------------------------------------------------------
@@ -326,5 +386,6 @@ CLASS zcl_bdc IMPLEMENTATION.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
+
 
 ENDCLASS.

@@ -3,6 +3,13 @@ CLASS zcx_bdc DEFINITION PUBLIC INHERITING FROM cx_dynamic_check FINAL CREATE PU
     INTERFACES:
       if_t100_dyn_msg,
       if_t100_message.
+    TYPES:
+      BEGIN OF ty_parted_string,
+        part1 TYPE c LENGTH 50,
+        part2 TYPE c LENGTH 50,
+        part3 TYPE c LENGTH 50,
+        part4 TYPE c LENGTH 50,
+      END OF ty_parted_string.
     CONSTANTS:
       BEGIN OF syst_message,
         msgid TYPE symsgid VALUE 'Z_BDC',
@@ -59,25 +66,47 @@ CLASS zcx_bdc DEFINITION PUBLIC INHERITING FROM cx_dynamic_check FINAL CREATE PU
         attr2 TYPE scx_attrname VALUE '',
         attr3 TYPE scx_attrname VALUE '',
         attr4 TYPE scx_attrname VALUE '',
-      END OF invalid_cattmode.
+      END OF invalid_cattmode,
+      BEGIN OF rfc_system_failure,
+        msgid TYPE symsgid VALUE 'Z_BDC',
+        msgno TYPE symsgno VALUE '000',
+        attr1 TYPE scx_attrname VALUE 'RFC_SYS_FAIL_MSG_PARTED-PART1',
+        attr2 TYPE scx_attrname VALUE 'RFC_SYS_FAIL_MSG_PARTED-PART2',
+        attr3 TYPE scx_attrname VALUE 'RFC_SYS_FAIL_MSG_PARTED-PART3',
+        attr4 TYPE scx_attrname VALUE 'RFC_SYS_FAIL_MSG_PARTED-PART4',
+      END OF rfc_system_failure,
+      BEGIN OF rfc_communication_failure,
+        msgid TYPE symsgid VALUE 'Z_BDC',
+        msgno TYPE symsgno VALUE '000',
+        attr1 TYPE scx_attrname VALUE 'RFC_COM_FAIL_MSG_PARTED-PART1',
+        attr2 TYPE scx_attrname VALUE 'RFC_COM_FAIL_MSG_PARTED-PART2',
+        attr3 TYPE scx_attrname VALUE 'RFC_COM_FAIL_MSG_PARTED-PART3',
+        attr4 TYPE scx_attrname VALUE 'RFC_COM_FAIL_MSG_PARTED-PART4',
+      END OF rfc_communication_failure.
     DATA:
-      syst        TYPE sy,
-      transaction TYPE sy-tcode,
-      queue_id    TYPE apqi-qid,
-      trans_count TYPE apq_tran,
-      dismode     TYPE ctu_params-dismode,
-      updmode     TYPE ctu_params-updmode,
-      cattmode    TYPE ctu_params-cattmode.
+      syst                    TYPE sy READ-ONLY,
+      transaction             TYPE sy-tcode READ-ONLY,
+      queue_id                TYPE apqi-qid READ-ONLY,
+      trans_count             TYPE apq_tran READ-ONLY,
+      dismode                 TYPE ctu_params-dismode READ-ONLY,
+      updmode                 TYPE ctu_params-updmode READ-ONLY,
+      cattmode                TYPE ctu_params-cattmode READ-ONLY,
+      rfc_sys_fail_msg        TYPE string READ-ONLY,
+      rfc_com_fail_msg        TYPE string READ-ONLY,
+      rfc_sys_fail_msg_parted TYPE ty_parted_string READ-ONLY,
+      rfc_com_fail_msg_parted TYPE ty_parted_string READ-ONLY.
     METHODS:
-      constructor IMPORTING textid      LIKE if_t100_message=>t100key OPTIONAL
-                            previous    LIKE previous OPTIONAL
-                            syst        LIKE syst OPTIONAL
-                            transaction LIKE transaction OPTIONAL
-                            queue_id    LIKE queue_id OPTIONAL
-                            trans_count LIKE trans_count OPTIONAL
-                            dismode     LIKE dismode OPTIONAL
-                            updmode     LIKE updmode OPTIONAL
-                            cattmode    LIKE cattmode OPTIONAL.
+      constructor IMPORTING textid           LIKE if_t100_message=>t100key OPTIONAL
+                            previous         LIKE previous OPTIONAL
+                            syst             LIKE syst OPTIONAL
+                            transaction      LIKE transaction OPTIONAL
+                            queue_id         LIKE queue_id OPTIONAL
+                            trans_count      LIKE trans_count OPTIONAL
+                            dismode          LIKE dismode OPTIONAL
+                            updmode          LIKE updmode OPTIONAL
+                            cattmode         LIKE cattmode OPTIONAL
+                            rfc_sys_fail_msg TYPE string OPTIONAL
+                            rfc_com_fail_msg TYPE string OPTIONAL.
   PROTECTED SECTION.
   PRIVATE SECTION.
 ENDCLASS.
@@ -101,6 +130,10 @@ CLASS zcx_bdc IMPLEMENTATION.
     me->dismode = dismode.
     me->updmode = updmode.
     me->cattmode = cattmode.
+    me->rfc_sys_fail_msg = rfc_sys_fail_msg.
+    me->rfc_sys_fail_msg_parted = me->rfc_sys_fail_msg.
+    me->rfc_com_fail_msg = rfc_com_fail_msg.
+    me->rfc_com_fail_msg_parted = me->rfc_com_fail_msg.
 
 * ---------------------------------------------------------------------
     IF textid IS INITIAL.
