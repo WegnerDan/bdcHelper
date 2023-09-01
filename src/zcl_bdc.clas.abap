@@ -72,7 +72,8 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       execute IMPORTING tcode TYPE sy-tcode
               RAISING   RESUMABLE(zcx_bdc),
       execute_rfc IMPORTING tcode       TYPE sy-tcode
-                            destination TYPE rfcdest DEFAULT 'NONE',
+                            destination TYPE rfcdest DEFAULT 'NONE'
+                  RAISING   RESUMABLE(zcx_bdc),
       get_messages RETURNING VALUE(result) TYPE ty_bdc_messages,
       get_bdcdata RETURNING VALUE(result) TYPE ty_bdc_lines,
       set_bdcdata IMPORTING bdc_lines TYPE ty_bdc_lines.
