@@ -69,8 +69,10 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       set_run_after_commit IMPORTING racommit TYPE abap_bool DEFAULT abap_true,
       set_sy_binpt_to_space IMPORTING nobinpt TYPE abap_bool DEFAULT abap_true,
       set_sy_binpt_to_space_end IMPORTING nobiend TYPE abap_bool DEFAULT abap_true,
-      execute IMPORTING tcode TYPE sy-tcode
-              RAISING   RESUMABLE(zcx_bdc),
+      execute IMPORTING tcode           TYPE sy-tcode
+                        check_authority TYPE abap_bool DEFAULT abap_true
+              RAISING   cx_sy_authorization_error
+                        RESUMABLE(zcx_bdc),
       execute_rfc IMPORTING tcode       TYPE sy-tcode
                             destination TYPE rfcdest DEFAULT 'NONE'
                   RAISING   RESUMABLE(zcx_bdc),
@@ -125,38 +127,32 @@ CLASS zcl_bdc IMPLEMENTATION.
 
   METHOD execute.
 * ---------------------------------------------------------------------
-    CALL FUNCTION 'AUTHORITY_CHECK_TCODE'
-      EXPORTING
-        tcode  = tcode
-      EXCEPTIONS
-        ok     = 0
-        not_ok = 1
-        OTHERS = 2.
-    CASE sy-subrc.
-      WHEN 0.
-        FREE bdc_messages.
-        CALL TRANSACTION   tcode
-             USING         bdc_lines
-             OPTIONS FROM  bdc_option
-             MESSAGES INTO bdc_messages.
-        IF  sy-subrc > 0
-        AND sy-subrc < 1001.
-          RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
-            EXPORTING
-              textid      = zcx_bdc=>transaction_error
-              syst        = sy
-              transaction = tcode.
-        ELSEIF sy-subrc > 1000.
-          RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
-            EXPORTING
-              textid = zcx_bdc=>bdc_error.
-        ENDIF.
-      WHEN OTHERS.
-        RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
-          EXPORTING
-            textid = zcx_bdc=>syst_message
-            syst   = sy.
-    ENDCASE.
+    FREE bdc_messages.
+    IF check_authority = abap_false.
+      CALL TRANSACTION   tcode
+           WITHOUT AUTHORITY-CHECK
+           USING         bdc_lines
+           OPTIONS FROM  bdc_option
+           MESSAGES INTO bdc_messages.
+    ELSE.
+      CALL TRANSACTION   tcode
+           WITH AUTHORITY-CHECK
+           USING         bdc_lines
+           OPTIONS FROM  bdc_option
+           MESSAGES INTO bdc_messages.
+    ENDIF.
+    IF  sy-subrc > 0
+    AND sy-subrc < 1001.
+      RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
+        EXPORTING
+          textid      = zcx_bdc=>transaction_error
+          syst        = sy
+          transaction = tcode.
+    ELSEIF sy-subrc > 1000.
+      RAISE RESUMABLE EXCEPTION TYPE zcx_bdc
+        EXPORTING
+          textid = zcx_bdc=>bdc_error.
+    ENDIF.
 
 * ---------------------------------------------------------------------
   ENDMETHOD.
