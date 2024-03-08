@@ -133,7 +133,7 @@ CLASS zcl_bdc IMPLEMENTATION.
            WITHOUT AUTHORITY-CHECK
            USING         bdc_lines
            OPTIONS FROM  bdc_option
-           MESSAGES INTO bdc_messages.
+           MESSAGES INTO bdc_messages.                   "#EC CI_CALLTA
     ELSE.
       CALL TRANSACTION   tcode
            WITH AUTHORITY-CHECK
