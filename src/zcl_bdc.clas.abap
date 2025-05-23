@@ -4,13 +4,17 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       ty_bdc_lines     TYPE STANDARD TABLE OF bdcdata WITH DEFAULT KEY,
       ty_bdc_messages  TYPE STANDARD TABLE OF bdcmsgcoll WITH DEFAULT KEY,
       ty_bapi_messages TYPE STANDARD TABLE OF bapiret2 WITH DEFAULT KEY.
-    CONSTANTS:
 
+    CONSTANTS:
       BEGIN OF c_dismode,
-        disp_all TYPE ctu_params-dismode VALUE 'A', " display everything
-        err_only TYPE ctu_params-dismode VALUE 'E', " only display errors
-        dark     TYPE ctu_params-dismode VALUE 'N', " display nothing
-        dbg_dark TYPE ctu_params-dismode VALUE 'P', " display nothing but enable debugging
+        "! display everything
+        disp_all TYPE ctu_params-dismode VALUE 'A',
+        "! only display errors
+        err_only TYPE ctu_params-dismode VALUE 'E',
+        "! display nothing
+        dark     TYPE ctu_params-dismode VALUE 'N',
+        "! display nothing but enable debugging
+        dbg_dark TYPE ctu_params-dismode VALUE 'P',
       END OF c_dismode,
       BEGIN OF c_updmode,
         local TYPE ctu_params-updmode VALUE 'L',
@@ -18,17 +22,25 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
         async TYPE ctu_params-updmode VALUE 'A',
       END OF c_updmode,
       BEGIN OF c_cattmode,
-        none                 TYPE ctu_params-cattmode VALUE ' ', " No CATT
-        no_ind_scr_control   TYPE ctu_params-cattmode VALUE 'N', " CATT without individual screen control
-        with_ind_scr_control TYPE ctu_params-cattmode VALUE 'A', " CATT with individual screen control
+        "! No CATT
+        none                 TYPE ctu_params-cattmode VALUE ' ',
+        "! CATT without individual screen control
+        no_ind_scr_control   TYPE ctu_params-cattmode VALUE 'N',
+        "! CATT with individual screen control
+        with_ind_scr_control TYPE ctu_params-cattmode VALUE 'A',
       END OF c_cattmode,
+      "! see: https://wiki.scn.sap.com/wiki/display/ABAP/Batch+Input+FAQ#BatchInputFAQ-WhatarethecommandsavailableforcontrollingtheflowofaBIsession?
       BEGIN OF c_okcode,
-        " see: https://wiki.scn.sap.com/wiki/display/ABAP/Batch+Input+FAQ#BatchInputFAQ-WhatarethecommandsavailableforcontrollingtheflowofaBIsession?
-        delete_transaction TYPE sy-ucomm VALUE '/BDEL', " delete the current transaction from the session
-        skip_transaction   TYPE sy-ucomm VALUE '/N',    " skip to the next transaction without completing the current transaction
-        cancel_transaction TYPE sy-ucomm VALUE '/BEND', " cancel the processing of the batch input session without completing any additional transactions, including the current transaction.
-        switch_to_err_only TYPE sy-ucomm VALUE '/BDE',  " while in foreground mode, use this code to switch to errors only mode
-        switch_to_disp_all TYPE sy-ucomm VALUE '/BDA',  " while in errors only mode, use this code to switch to foreground mode
+        "! delete the current transaction from the session
+        delete_transaction TYPE sy-ucomm VALUE '/BDEL',
+        "! skip to the next transaction without completing the current transaction
+        skip_transaction   TYPE sy-ucomm VALUE '/N',
+        "! cancel the processing of the batch input session without completing any additional transactions, including the current transaction.
+        cancel_transaction TYPE sy-ucomm VALUE '/BEND',
+        "! while in foreground mode, use this code to switch to errors only mode
+        switch_to_err_only TYPE sy-ucomm VALUE '/BDE',
+        "! while in errors only mode, use this code to switch to foreground mode
+        switch_to_disp_all TYPE sy-ucomm VALUE '/BDA',
         button_enter       TYPE sy-ucomm VALUE '/00',
         button_f1          TYPE sy-ucomm VALUE '/01',
         button_f2          TYPE sy-ucomm VALUE '/02',
