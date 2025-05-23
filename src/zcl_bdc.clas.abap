@@ -25,13 +25,26 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
         "! same as dbg_dark + the execution is run with SY-BATCH = 'X'
         batch_dbg_dark TYPE ctu_params-dismode VALUE 'S',
       END OF c_dismode,
+      "! update mode
       BEGIN OF c_updmode,
+        "! <em>Local updates.</em><br/>
+        "! Updates of the called program are executed in the same way
+        "! as if the statement SET UPDATE TASK LOCAL had been executed in it.
         local TYPE ctu_params-updmode VALUE 'L',
+        "! <em>Synchronous update.</em><br/>
+        "! Updates of the called programs are executed in the same way
+        "! as if the addition AND WAIT were specified in the statement COMMIT WORK.
         sync  TYPE ctu_params-updmode VALUE 'S',
+        "! <em>Asynchronous update.</em><br/>
+        "! Updates of the called programs are executed in the same way
+        "! as if the addition AND WAIT were <strong>not</strong> specified in the statement COMMIT WORK.
         async TYPE ctu_params-updmode VALUE 'A',
       END OF c_updmode,
+      "! <em>CATT mode for processing.</em><br/>
+      "! While batch input is used mostly for data transfer,
+      "! CATT processes are designed to be reusable tests of more complex transactions.
       BEGIN OF c_cattmode,
-        "! No CATT
+        "! no CATT mode
         none                 TYPE ctu_params-cattmode VALUE ' ',
         "! CATT without individual screen control
         no_ind_scr_control   TYPE ctu_params-cattmode VALUE 'N',
