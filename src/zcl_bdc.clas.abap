@@ -6,15 +6,24 @@ CLASS zcl_bdc DEFINITION PUBLIC CREATE PUBLIC.
       ty_bapi_messages TYPE STANDARD TABLE OF bapiret2 WITH DEFAULT KEY.
 
     CONSTANTS:
+      "! see note 433137
       BEGIN OF c_dismode,
         "! display everything
-        disp_all TYPE ctu_params-dismode VALUE 'A',
+        disp_all       TYPE ctu_params-dismode VALUE 'A',
         "! only display errors
-        err_only TYPE ctu_params-dismode VALUE 'E',
+        err_only       TYPE ctu_params-dismode VALUE 'E',
         "! display nothing
-        dark     TYPE ctu_params-dismode VALUE 'N',
+        dark           TYPE ctu_params-dismode VALUE 'N',
         "! display nothing but enable debugging
-        dbg_dark TYPE ctu_params-dismode VALUE 'P',
+        dbg_dark       TYPE ctu_params-dismode VALUE 'P',
+        "! same as disp_all + the execution is run with SY-BATCH = 'X'
+        batch_disp_all TYPE ctu_params-dismode VALUE 'D',
+        "! same as err_only + the execution is run with SY-BATCH = 'X'
+        batch_err_only TYPE ctu_params-dismode VALUE 'H',
+        "! same as dark + the execution is run with SY-BATCH = 'X'
+        batch_dark     TYPE ctu_params-dismode VALUE 'Q',
+        "! same as dbg_dark + the execution is run with SY-BATCH = 'X'
+        batch_dbg_dark TYPE ctu_params-dismode VALUE 'S',
       END OF c_dismode,
       BEGIN OF c_updmode,
         local TYPE ctu_params-updmode VALUE 'L',
